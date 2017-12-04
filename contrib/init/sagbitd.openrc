@@ -1,0 +1,92 @@
+#!/sbin/runscript
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/sagbit/.sagbit" ]; then
+	SAGBITD_DEFAULT_DATADIR="/var/lib/sagbit/.sagbit"
+else
+	SAGBITD_DEFAULT_DATADIR="/var/lib/sagbitd"
+fi
+
+SAGBITD_CONFIGFILE=${SAGBITD_CONFIGFILE:-/etc/sagbit/sagbit.conf}
+SAGBITD_PIDDIR=${SAGBITD_PIDDIR:-/var/run/sagbitd}
+SAGBITD_PIDFILE=${SAGBITD_PIDFILE:-${SAGBITD_PIDDIR}/sagbitd.pid}
+SAGBITD_DATADIR=${SAGBITD_DATADIR:-${SAGBITD_DEFAULT_DATADIR}}
+SAGBITD_USER=${SAGBITD_USER:-${SAGBIT_USER:-sagbit}}
+SAGBITD_GROUP=${SAGBITD_GROUP:-sagbit}
+SAGBITD_BIN=${SAGBITD_BIN:-/usr/bin/sagbitd}
+SAGBITD_NICE=${SAGBITD_NICE:-${NICELEVEL:-0}}
+SAGBITD_OPTS="${SAGBITD_OPTS:-${SAGBIT_OPTS}}"
+
+name="Sagbit Core Daemon"
+description="Sagbit cryptocurrency P2P network daemon"
+
+command="/usr/bin/sagbitd"
+command_args="-pid=\"${SAGBITD_PIDFILE}\" \
+		-conf=\"${SAGBITD_CONFIGFILE}\" \
+		-datadir=\"${SAGBITD_DATADIR}\" \
+		-daemon \
+		${SAGBITD_OPTS}"
+
+required_files="${SAGBITD_CONFIGFILE}"
+start_stop_daemon_args="-u ${SAGBITD_USER} \
+			-N ${SAGBITD_NICE} -w 2000"
+pidfile="${SAGBITD_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${SAGBITD_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${SAGBITD_USER}:${SAGBITD_GROUP}" \
+	"${SAGBITD_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${SAGBITD_USER}:${SAGBITD_GROUP}" \
+	"${SAGBITD_PIDDIR}"
+
+	checkpath -f \
+	-o ${SAGBITD_USER}:${SAGBITD_GROUP} \
+	-m 0660 \
+	${SAGBITD_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${SAGBITD_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run sagbitd."
+		eerror "The setting must appear in ${SAGBITD_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following"
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is also recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Sagbit Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

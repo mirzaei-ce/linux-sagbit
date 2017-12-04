@@ -1,0 +1,6 @@
+usr/local/bin/sagbit-qt usr/bin
+share/pixmaps/sagbit32.xpm usr/share/pixmaps
+share/pixmaps/sagbit16.xpm usr/share/pixmaps
+share/pixmaps/sagbit128.png usr/share/pixmaps
+debian/sagbit-qt.desktop usr/share/applications
+debian/sagbit-qt.protocol usr/share/kde4/services/

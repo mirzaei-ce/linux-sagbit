@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Sagbit
+Comment=Sagbit P2P Cryptocurrency
+Comment[fr]=Sagbit, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Sagbit, eşten eşe kriptografik sanal para birimi
+Exec=sagbit-qt %u
+Terminal=false
+Type=Application
+Icon=sagbit128
+MimeType=x-scheme-handler/sagbit;
+Categories=Office;Finance;

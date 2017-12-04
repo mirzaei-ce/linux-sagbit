@@ -1,0 +1,22 @@
+[Unit]
+Description=Sagbit's distributed currency daemon
+After=network.target
+
+[Service]
+User=sagbit
+Group=sagbit
+
+Type=forking
+PIDFile=/var/lib/sagbitd/sagbitd.pid
+ExecStart=/usr/bin/sagbitd -daemon -pid=/var/lib/sagbitd/sagbitd.pid \
+-conf=/etc/sagbit/sagbit.conf -datadir=/var/lib/sagbitd -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
